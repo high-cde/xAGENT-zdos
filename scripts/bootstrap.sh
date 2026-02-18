@@ -6,12 +6,12 @@ mkdir -p backend worker agents frontend pages
 
 echo ">> Generazione backend..."
 cat > backend/server.js << 'EOF'
-// BACKEND QUI
+// BACKEND COMPLETO QUI
 EOF
 
 echo ">> Generazione worker..."
 cat > worker/worker.js << 'EOF'
-// WORKER QUI
+// WORKER COMPLETO QUI
 EOF
 
 echo ">> Configurazione..."
@@ -26,7 +26,7 @@ EOF
 
 echo ">> Schema DB..."
 cat > schema.sql << 'EOF'
-// SCHEMA SQL QUI
+// SCHEMA SQL COMPLETO QUI
 EOF
 
 echo ">> Agenti..."
@@ -36,7 +36,7 @@ EOF
 
 echo ">> Frontend..."
 cat > pages/index.html << 'EOF'
-// FRONTEND QUI
+// FRONTEND COMPLETO QUI
 EOF
 
 echo ">> Installazione dipendenze..."
