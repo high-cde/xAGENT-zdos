@@ -1,0 +1,6 @@
+{
+  "dsn_contract_address": "0xfc90516a1f736FaC557e09D8853dB80dA192c296",
+  "world_treasury_address": "0xWORLD_TREASURY_ADDRESS",
+  "zsc_per_dsn": 100,
+  "min_withdraw_dsn": 1.0
+}
