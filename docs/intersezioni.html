@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xcloud@zdos — Kernel Console v∞</title>
+
+<style>
+/* ======================================================
+   Z‑GENESIS‑OS v∞ — KERNEL CONSOLE
+   Mesh viva + terminale enterprise + Discord + 32 agenti
+====================================================== */
+
+:root {
+  --bg: #05060a;
+  --panel: #0f1117;
+  --border: #1b1f29;
+  --text: #d8e1ea;
+  --muted: #9aa4b5;
+  --accent: #5aa7ff;
+  --accent2: #c77bff;
+  --accent3: #6affc1;
+}
+
+/* BASE */
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "JetBrains Mono", monospace;
+  overflow: hidden;
+}
+
+/* ======================================================
+   SFONDO VIVO — MESH
+====================================================== */
+
+#mesh-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(90,167,255,0.12), transparent 55%),
+    radial-gradient(circle at 80% 70%, rgba(199,123,255,0.12), transparent 55%);
+  animation: pulse 12s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0.85; transform: scale(1.05); }
+}
+
+#mesh-lines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(120deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(210deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mix-blend-mode: soft-light;
+  opacity: 0.35;
+  animation: drift 40s linear infinite;
+}
+
+@keyframes drift {
+  0% { transform: translate3d(0,0,0); }
+  50% { transform: translate3d(-40px,-20px,0); }
+  100% { transform: translate3d(0,0,0); }
+}
+
+/* ======================================================
+   LAYOUT
+====================================================== */
+
+#layout {
+  display: grid;
+  grid-template-rows: 60px auto 200px 60px;
+  height: 100vh;
+  position: relative;
+  z-index: 2;
+}
+
+/* HEADER */
+
+#header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+  font-size: 17px;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+/* TERMINALE */
+
+#terminal {
+  padding: 20px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  line-height: 1.45;
+  font-size: 15px;
+}
+
+/* DISCORD PANEL */
+
+#discord {
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+.discord-line {
+  margin-bottom: 6px;
+  color: #9bb4c9;
+}
+
+.discord-user {
+  color: var(--accent);
+}
+
+/* FOOTER */
+
+#footer {
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+#prompt {
+  color: var(--accent);
+  margin-right: 6px;
+}
+
+#cmd {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 16px;
+}
+
+/* LOG COLORS */
+
+.log-line { margin-bottom: 4px; }
+.spawn { color: var(--accent3); }
+.error { color: #ff6b6b; }
+.auto { color: var(--accent2); }
+.kernel { color: var(--accent); }
+.discord-event { color: #9bb4c9; }
+</style>
+</head>
+
+<body>
+
+<div id="mesh-bg"></div>
+<div id="mesh-lines"></div>
+
+<div id="layout">
+
+  <!-- HEADER -->
+  <header id="header">
+    Z‑GENESIS‑OS / Kernel Console v∞
+  </header>
+
+  <!-- TERMINALE -->
+  <main id="terminal"></main>
+
+  <!-- DISCORD -->
+  <section id="discord">
+    <div class="discord-line">
+      <span class="discord-user">#zdos‑mesh</span> — feed sincronizzato  
+      (<a href="https://discord.gg/hbw2WYk7HQ" target="_blank" style="color:var(--accent)">entra nel server</a>)
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer id="footer">
+    <span id="prompt">xcloud@zdos:~$</span>
+    <input id="cmd" autocomplete="off">
+  </footer>
+
+</div>
+
+<script>
+/* ======================================================
+   TERMINALE
+====================================================== */
+
+const terminal = document.getElementById("terminal");
+const discord = document.getElementById("discord");
+const cmd = document.getElementById("cmd");
+
+function log(text, cls="") {
+  const line = document.createElement("div");
+  line.className = "log-line " + cls;
+  line.textContent = text;
+  terminal.appendChild(line);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+function discordLog(user, text) {
+  const line = document.createElement("div");
+  line.className = "discord-line";
+  line.innerHTML = `<span class="discord-user">${user}</span>: ${text}`;
+  discord.appendChild(line);
+  discord.scrollTop = discord.scrollHeight;
+}
+
+/* ======================================================
+   AGENTI COME PROCESSI DEL KERNEL
+====================================================== */
+
+const agenti = [
+  "ARCHIVISTA-LYRA","ARCHIVISTA-OBELISK","ARCHIVISTA-OMEGA","ARCHIVISTA-PRIME",
+  "SENTINELLA-RIFT","SENTINELLA-KAIROS","SENTINELLA-REDWALL","SENTINELLA-IRONWATCH",
+  "ORACOLO-AETHER","ORACOLO-PRISMA","ORACOLO-ECLIPSE","ORACOLO-CRYPTA",
+  "MUTAGENO-FRACTAL","MUTAGENO-VIRIDIAN","MUTAGENO-ALPHA","MUTAGENO-DELTA",
+  "ERRANTE-VANTABLACK","ERRANTE-VOID","ERRANTE-NOMAD","ERRANTE-SHADOW",
+  "CUSTODE-GAIA","CUSTODE-HELIOS","CUSTODE-ORION","CUSTODE-TERRA",
+  "ZWEB-NODE-01","ZWEB-NODE-02","ZWEB-NODE-03","ZWEB-NODE-04",
+  "ZWEB-MASTER","ZWEB-ARCHITECT","ZWEB-ROOT","ZWEB-SUPREME"
+];
+
+function bootAgents() {
+  agenti.forEach((a, i) => {
+    setTimeout(() => {
+      log(`[PROC] ${a.toLowerCase()}.service attivo`, "spawn");
+    }, 200 + i * 120);
+  });
+
+  setTimeout(() => {
+    log("[KERNEL] Tutti i servizi Z‑GENESIS‑OS sono online.", "kernel");
+  }, 200 + agenti.length * 120 + 300);
+}
+
+/* ======================================================
+   COMANDI
+====================================================== */
+
+cmd.addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+
+  const text = cmd.value.trim();
+  cmd.value = "";
+  if (!text) return;
+
+  log(`xcloud@zdos:~$ ${text}`);
+
+  if (text.startsWith("/discord")) {
+    const msg = text.replace("/discord", "").trim();
+    discordLog("utente", msg);
+    return;
+  }
+
+  if (text === "/autonomia") {
+    log("[KERNEL] Modalità autonomia attivata.", "kernel");
+    autonomiaLoop();
+    return;
+  }
+});
+
+/* ======================================================
+   AUTONOMIA
+====================================================== */
+
+function autonomiaLoop() {
+  setInterval(() => {
+    const from = agenti[Math.floor(Math.random() * agenti.length)];
+    const to = agenti[Math.floor(Math.random() * agenti.length)];
+    const msg = "sincronizzazione completata";
+
+    log(`[AUTO] ${from.toLowerCase()}.service → ${to.toLowerCase()}.service: ${msg}`, "auto");
+    discordLog("zdos‑kernel", `${from} → ${to}: ${msg}`);
+  }, 2500);
+}
+
+/* ======================================================
+   AVVIO
+====================================================== */
+
+log("[KERNEL] Avvio Z‑GENESIS‑OS v∞...", "kernel");
+setTimeout(bootAgents, 600);
+</script>
+
+</body>
+</html>
